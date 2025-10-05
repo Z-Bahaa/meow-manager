@@ -36,7 +36,6 @@ import { LitterEdit } from "./pages/litters/edit";
 import { LitterShow } from "./pages/litters/show";
 
         
-import { ShoppingOutlined, GiftOutlined, TagsOutlined, TeamOutlined } from '@ant-design/icons';
 import { useContext } from 'react';
 import { ColorModeContext } from './contexts/color-mode';
 
@@ -122,7 +121,6 @@ function App() {
                     meta: {
                       canDelete: true,
                       label: "Cats",
-                      icon: <ShoppingOutlined style={{color: primaryColor}}/>,
                     },
                   },
                   {
@@ -134,7 +132,6 @@ function App() {
                     meta: {
                       canDelete: true,
                       label: "Litters",
-                      icon: <TeamOutlined style={{color: primaryColor}}/>,
                     },
                   }
                 ]}
