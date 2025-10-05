@@ -1,899 +1,470 @@
-import { Show, useTable } from "@refinedev/antd";
-import { Typography, Button, Image, Tag, Card, Space, Avatar, Divider, Table, Popconfirm, message, Input } from "antd";
-import { EditOutlined, ArrowLeftOutlined, GlobalOutlined, EyeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined } from "@ant-design/icons";
-import { useNavigate, useParams } from "react-router-dom";
-import { useContext, useEffect, useState } from "react";
+import { Show, EditButton, DeleteButton, useNotificationProvider } from "@refinedev/antd";
+import { useShow, useList } from "@refinedev/core";
+import { Typography, Space, Button, Card, Row, Col, Tag, Divider } from "antd";
+import { useContext } from "react";
 import { ColorModeContext } from "../../contexts/color-mode";
-import { useOne, useMany, useList, useDelete } from "@refinedev/core";
-import { supabaseClient as supabase } from "../../utility/supabaseClient";
+import { CatCard } from "../../components";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 export const CatShow = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
   const { mode } = useContext(ColorModeContext);
-  const [titleSearchText, setTitleSearchText] = useState("");
-  const [codeSearchText, setCodeSearchText] = useState("");
+  const { open } = useNotificationProvider();
+  const { queryResult } = useShow();
+  const { data, isLoading } = queryResult;
 
-  // Fetch cat data
-  const { data: catData, isLoading: catLoading } = useOne({
+  // Fetch all cats once for efficiency
+  const { data: allCatsData } = useList({
     resource: "cats",
-    id: id || "",
+    pagination: {
+      mode: "off", // Get all cats without pagination
+    },
   });
 
-  const cat = catData?.data;
+  // Fetch all litters for litter names
+  const { data: allLittersData } = useList({
+    resource: "litters",
+    pagination: {
+      mode: "off", // Get all litters without pagination
+    },
+  });
 
-  // Update document title when cat data is loaded
-  useEffect(() => {
-    if (cat?.title) {
-      document.title = `${cat.title} - Cat Details`;
+  // Create a map for quick cat lookup
+  const catsMap = new Map();
+  allCatsData?.data?.forEach((cat: any) => {
+    catsMap.set(cat.id, cat);
+  });
+
+  // Create a map for quick litter lookup
+  const littersMap = new Map();
+  allLittersData?.data?.forEach((litter: any) => {
+    littersMap.set(litter.id, litter);
+  });
+
+  const catData = data?.data;
+
+  // Helper function to calculate and format age (same as cats list)
+  const calculateAge = (birthDate: string, record: any) => {
+    if (!birthDate) return <span style={{ color: '#999' }}>Unknown</span>;
+    
+    const birth = new Date(birthDate);
+    const statusLower = record.status?.toLowerCase() || '';
+    
+    // For dead cats, calculate age at death
+    let endDate = new Date();
+    let isDead = false;
+    
+    if (statusLower.includes('dead') && record.death_date) {
+      endDate = new Date(record.death_date);
+      isDead = true;
     }
-  }, [cat?.title]);
-
-  // Fetch country data if cat has country_id
-  const { data: countryData } = useMany({
-    resource: "countries",
-    ids: cat?.country_id ? [cat.country_id] : [],
-  });
-
-  const country = countryData?.data?.[0];
-
-  // Fetch cat categories
-  const [catCategories, setCatCategories] = useState<any[]>([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCatCategories = async () => {
-      if (cat?.id) {
-        try {
-          const { data, error } = await supabase
-            .from('cat_categories')
-            .select(`
-              category_id,
-              categories (
-                id,
-                title,
-                image_url
-              )
-            `)
-            .eq('cat_id', cat.id);
-
-          if (error) {
-            console.error('Error fetching cat categories:', error);
-            setCategoriesLoading(false);
-            return;
-          }
-
-          setCatCategories(data || []);
-          setCategoriesLoading(false);
-        } catch (error) {
-          console.error('Error fetching cat categories:', error);
-          setCategoriesLoading(false);
-        }
+    
+    const diffTime = endDate.getTime() - birth.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return <span style={{ color: '#999' }}>Invalid</span>;
+    
+    // Helper function to format age
+    const formatAge = (days: number, isDeceased: boolean = false) => {
+      const prefix = isDeceased ? 'died at ' : '';
+      
+      // Less than 1 month (30 days) - show days
+      if (days < 30) {
+        return <span style={{ fontWeight: 'bold', color: isDeceased ? '#722ed1' : '#52c41a' }}>
+          {prefix}{days} {days === 1 ? 'day' : 'days'}
+        </span>;
       }
+      
+      // Less than 5 months (150 days) - show weeks
+      if (days < 150) {
+        const weeks = Math.floor(days / 7);
+        return <span style={{ fontWeight: 'bold', color: isDeceased ? '#722ed1' : '#1890ff' }}>
+          {prefix}{weeks} {weeks === 1 ? 'week' : 'weeks'}
+        </span>;
+      }
+      
+      // 5 months or more - show years and months
+      const years = Math.floor(days / 365);
+      const remainingDays = days % 365;
+      const months = Math.floor(remainingDays / 30);
+      
+      if (years === 0) {
+        return <span style={{ fontWeight: 'bold', color: isDeceased ? '#722ed1' : '#fa8c16' }}>
+          {prefix}{months} {months === 1 ? 'month' : 'months'}
+        </span>;
+      }
+      
+      if (months === 0) {
+        return <span style={{ fontWeight: 'bold', color: isDeceased ? '#722ed1' : '#722ed1' }}>
+          {prefix}{years} {years === 1 ? 'year' : 'years'}
+        </span>;
+      }
+      
+      return <span style={{ fontWeight: 'bold', color: isDeceased ? '#722ed1' : '#722ed1' }}>
+        {prefix}{years}y {months}m
+      </span>;
     };
-
-    fetchCatCategories();
-  }, [cat?.id]);
-
-  // Fetch cat's deals
-  const { tableProps, tableQueryResult } = useTable({
-    resource: "deals",
-    filters: {
-      permanent: [
-        {
-          field: "cat_id",
-          operator: "eq",
-          value: id,
-        },
-        {
-          field: "title",
-          operator: "contains",
-          value: titleSearchText,
-        },
-        {
-          field: "code",
-          operator: "contains",
-          value: codeSearchText,
-        },
-      ],
-    },
-    onSearch: (values: any) => {
-      setTitleSearchText((values as any).title || "");
-      setCodeSearchText((values as any).code || "");
-      return [];
-    },
-    sorters: {
-      initial: [],
-    },
-    pagination: {
-      pageSize: 10,
-    },
-  });
-
-  const { data: dealsData, isLoading: dealsLoading } = tableQueryResult;
-
-  // Fetch all countries for deal display
-  const { data: allCountriesData } = useList({
-    resource: "countries",
-    pagination: {
-      mode: "off",
-    },
-  });
-
-  // Create a map of country data for quick lookup
-  const countriesMap = allCountriesData?.data?.reduce((acc: any, country: any) => {
-    acc[country.id] = country;
-    return acc;
-  }, {}) || {};
-
-  // Delete functionality
-  const { mutate: deleteDeal } = useDelete();
-
-  // Custom delete function
-  const handleDeleteDeal = async (deal: any) => {
-    try {
-      // If deal deletion was successful, update cat data
-      if (deal.cat_id) {
-        try {
-          // Get current cat data
-          const currentCat = cat;
-          if (currentCat) {
-            const currentTotalOffers = currentCat.total_offers || 0;
-            const newTotalOffers = Math.max(0, currentTotalOffers - 1); // Ensure it doesn't go below 0
-            
-            // Prepare cat update data
-            const catUpdateData: any = { total_offers: newTotalOffers };
-            
-            // Check if the deleted deal was the cat's top deal
-            if (currentCat.discount_id === deal.id) {
-              // Need to recalculate the top deal
-              const remainingDeals = dealsData?.data?.filter((d: any) => d.id !== deal.id) || [];
-              
-              if (remainingDeals.length === 0) {
-                // No deals left, clear all discount fields to null
-                catUpdateData.discount = null;
-                catUpdateData.discount_unit = null;
-                catUpdateData.discount_type = null;
-                catUpdateData.discount_id = null;
-              } else {
-                // Find the new top deal
-                let topDeal = null;
-                let highestDiscount = -1;
-                let bogoDeal = null; // Store BOGO/Free Shipping deal as fallback
-                
-                for (const remainingDeal of remainingDeals) {
-                  if (remainingDeal.type === 'discount' || remainingDeal.type === 'amountOff') {
-                    const dealDiscount = remainingDeal.discount || 0;
-                    if (dealDiscount > highestDiscount) {
-                      highestDiscount = dealDiscount;
-                      topDeal = remainingDeal;
-                    }
-                  } else if (remainingDeal.type === 'bogo' || remainingDeal.type === 'freeShipping') {
-                    // Store BOGO/Free Shipping deal as fallback, but don't break
-                    if (!bogoDeal) {
-                      bogoDeal = remainingDeal;
-                    }
-                  }
-                }
-                
-                // If no discount/amountOff deals found, use BOGO/Free Shipping as fallback
-                if (!topDeal && bogoDeal) {
-                  topDeal = bogoDeal;
-                }
-                
-                if (topDeal) {
-                  if (topDeal.type === 'discount' || topDeal.type === 'amountOff') {
-                    // Set discount_unit based on deal type
-                    catUpdateData.discount = topDeal.discount;
-                    catUpdateData.discount_unit = topDeal.type === 'discount' ? '%' : '$';
-                  } else {
-                    // For BOGO and Free Shipping deals, set default values
-                    catUpdateData.discount = 0;
-                    catUpdateData.discount_unit = '';
-                  }
-                  catUpdateData.discount_type = topDeal.type;
-                  catUpdateData.discount_id = topDeal.id;
-                }
-              }
-              
-              // Update the cat BEFORE deleting the deal to avoid foreign key constraint
-              const { error: updateError } = await supabase
-                .from('cats')
-                .update(catUpdateData)
-                .eq('id', deal.cat_id);
-              
-              if (updateError) {
-                console.error('Failed to update cat:', updateError);
-                message.error("Failed to update cat data");
-                return; // Don't delete the deal if cat update fails
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error updating cat:', error);
-          message.error("Failed to update cat data");
-          return; // Don't delete the deal if cat update fails
-        }
-      }
-      
-      // Now delete the deal record
-      await deleteDeal({ resource: "deals", id: deal.id });
-
-      // Update local cat data if needed
-      if (deal.cat_id && cat) {
-        const currentTotalOffers = cat.total_offers || 0;
-        const newTotalOffers = Math.max(0, currentTotalOffers - 1);
-        cat.total_offers = newTotalOffers;
-        
-        // Update local discount data if this was the top deal
-        if (cat.discount_id === deal.id) {
-          const remainingDeals = dealsData?.data?.filter((d: any) => d.id !== deal.id) || [];
-          
-          if (remainingDeals.length === 0) {
-            cat.discount = null;
-            cat.discount_unit = null;
-            cat.discount_type = null;
-            cat.discount_id = null;
-          } else {
-            // Find the new top deal for local update
-            let topDeal = null;
-            let highestDiscount = -1;
-            let bogoDeal = null; // Store BOGO/Free Shipping deal as fallback
-            
-            for (const remainingDeal of remainingDeals) {
-              if (remainingDeal.type === 'discount' || remainingDeal.type === 'amountOff') {
-                const dealDiscount = remainingDeal.discount || 0;
-                if (dealDiscount > highestDiscount) {
-                  highestDiscount = dealDiscount;
-                  topDeal = remainingDeal;
-                }
-              } else if (remainingDeal.type === 'bogo' || remainingDeal.type === 'freeShipping') {
-                // Store BOGO/Free Shipping deal as fallback, but don't break
-                if (!bogoDeal) {
-                  bogoDeal = remainingDeal;
-                }
-              }
-            }
-            
-            // If no discount/amountOff deals found, use BOGO/Free Shipping as fallback
-            if (!topDeal && bogoDeal) {
-              topDeal = bogoDeal;
-            }
-            
-            if (topDeal) {
-              if (topDeal.type === 'discount' || topDeal.type === 'amountOff') {
-                // Set discount_unit based on deal type
-                cat.discount = topDeal.discount;
-                cat.discount_unit = topDeal.type === 'discount' ? '%' : '$';
-              } else {
-                cat.discount = 0;
-                cat.discount_unit = '';
-              }
-              cat.discount_type = topDeal.type;
-              cat.discount_id = topDeal.id;
-            }
-          }
-        }
-      }
-      
-      message.success("Deal deleted successfully and cat data updated");
-    } catch (error) {
-      message.error("Failed to delete deal");
-    }
+    
+    return formatAge(diffDays, isDead);
   };
 
-  // CSS for table scrolling
-  const tableScrollStyles = `
-    .hide-scrollbar .ant-table-body::-webkit-scrollbar {
-      display: none;
-    }
-    .hide-scrollbar .ant-table-body {
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    
-    .ant-table-wrapper::-webkit-scrollbar {
-      display: none;
-    }
-    .ant-table-wrapper {
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      overflow: auto;
-    }
-    
-    .ant-table::-webkit-scrollbar {
-      display: none;
-    }
-    .ant-table {
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      min-width: 800px;
-    }
-    
-    .ant-table-body::-webkit-scrollbar {
-      display: none;
-    }
-    .ant-table-body {
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    
-    .ant-table-header::-webkit-scrollbar {
-      display: none;
-    }
-    .ant-table-header {
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    
-    .ant-table th:last-child,
-    .ant-table td:last-child {
-      max-width: fit-content !important;
-    }
-    
-    .ant-pagination {
-      display: flex !important;
-      justify-content: center !important;
-      align-items: center !important;
-      margin-top: 16px !important;
-    }
-    
-    @media (max-width: 850px) {
-      .action-button {
-        min-width: 32px !important;
-        padding: 4px 8px !important;
-      }
-    }
-    
-    @media (max-width: 768px) {
-      .ant-table {
-        min-width: 600px;
-      }
-      
-      .ant-table-scroll {
-        max-width: calc(100vw - 80px) !important;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .ant-table-scroll {
-        max-width: calc(100vw - 60px) !important;
-      }
-    }
-    
-    @media (max-width: 320px) {
-      .ant-table-scroll {
-        max-width: calc(100vw - 40px) !important;
-      }
-    }
-  `;
+  // Get parents
+  const mother = catData?.mother_id ? catsMap.get(catData.mother_id) : null;
+  const father = catData?.father_id ? catsMap.get(catData.father_id) : null;
 
-  // Search functionality for table columns
-  const getColumnSearchProps = (dataIndex: string) => ({
-    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
-      <div style={{ padding: 8 }}>
-        <Input
-          placeholder={`Search ${dataIndex}`}
-          value={selectedKeys[0]}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-          onPressEnter={() => {
-            confirm();
-            // Trigger server-side search for specific column
-            if (dataIndex === "title") {
-              setTitleSearchText(selectedKeys[0] || "");
-            } else if (dataIndex === "code") {
-              setCodeSearchText(selectedKeys[0] || "");
-            }
-          }}
-          style={{ marginBottom: 8, display: 'block' }}
-        />
-        <Space>
-          <Button
-            type="primary"
-            onClick={() => {
-              confirm();
-              // Trigger server-side search for specific column
-              if (dataIndex === "title") {
-                setTitleSearchText(selectedKeys[0] || "");
-              } else if (dataIndex === "code") {
-                setCodeSearchText(selectedKeys[0] || "");
-              }
-            }}
-            icon={<SearchOutlined />}
-            size="small"
-            style={{ 
-              width: 90,
-              color: mode === "dark" ? "#000000" : "#ffffff"
-            }}
-          >
-            Search
-          </Button>
-          <Button
-            onClick={() => {
-              clearFilters && clearFilters();
-              // Clear server-side search for specific column
-              if (dataIndex === "title") {
-                setTitleSearchText("");
-              } else if (dataIndex === "code") {
-                setCodeSearchText("");
-              }
-            }}
-            size="small"
-            style={{ width: 90 }}
-          >
-            Reset
-          </Button>
-        </Space>
-      </div>
-    ),
-    filterIcon: (filtered: boolean) => (
-      <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
-    ),
-    onFilter: (value: any, record: any) =>
-      record[dataIndex]
-        ? record[dataIndex].toString().toLowerCase().includes((value as string).toLowerCase())
-        : false,
-    onFilterDropdownOpenChange: (visible: boolean) => {
-      if (visible) {
-        setTimeout(() => {
-          const element = document.getElementById('search-input') as HTMLInputElement;
-          element?.select();
-        }, 100);
-      }
-    },
-  });
+  // Get littermates (cats from the same litter, excluding current cat)
+  const littermates = allCatsData?.data?.filter((cat: any) => 
+    cat.litter_id === catData?.litter_id && cat.id !== catData?.id
+  ) || [];
 
-  // Deals table columns
-  const dealsColumns = [
-    {
-      title: "Title",
-      dataIndex: "title",
-      key: "title",
-      width: 150,
-      ...getColumnSearchProps("title"),
-      render: (text: string) => (
-        <div style={{ 
-          fontWeight: "500", 
-          color: mode === "dark" ? "#ffffff" : "#000000",
-          wordWrap: "break-word",
-          whiteSpace: "normal",
-          lineHeight: "1.4"
-        }}>
-          {text}
-        </div>
-      ),
-    },
-    {
-      title: "Code",
-      dataIndex: "code",
-      key: "code",
-      width: 150,
-      ...getColumnSearchProps("code"),
-      render: (text: string) => (
-        <div style={{ 
-          backgroundColor: mode === "dark" ? "#1f1f1f" : "#f0f0f0",
-          color: mode === "dark" ? "#ffffff" : "#333333",
-          maxWidth: "130px",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          fontFamily: "monospace",
-          fontSize: "16px",
-          fontWeight: "600",
-          padding: "4px 8px",
-          borderRadius: "6px",
-          border: `1px solid ${mode === "dark" ? "#434343" : "#d9d9d9"}`,
-          display: "inline-block"
-        }}>
-          {text || "No code"}
-        </div>
-      ),
-    },
-    {
-      title: "Type",
-      dataIndex: "type",
-      key: "type",
-      width: 120,
-      filters: [
-        { text: 'Discount', value: 'discount' },
-        { text: 'Amount Off', value: 'amountOff' },
-        { text: 'BOGO', value: 'bogo' },
-        { text: 'Free Shipping', value: 'freeShipping' },
-      ],
-      onFilter: (value: any, record: any) => record.type === (value as string),
-      render: (type: string) => {
-        const typeConfig = {
-          bogo: { label: "BOGO", color: "blue" },
-          freeShipping: { label: "Free Shipping", color: "green" },
-          amountOff: { label: "Amount Off", color: "orange" },
-          discount: { label: "Discount", color: "purple" }
-        };
-        
-        const config = typeConfig[type as keyof typeof typeConfig] || { label: type, color: "default" };
-        
-        return (
-          <Tag color={config.color} style={{ fontSize: "12px", fontWeight: "500" }}>
-            {config.label}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: "Discount",
-      dataIndex: "discount",
-      key: "discount",
-      width: 150,
-      sorter: true,
-      render: (discount: number, record: any) => {
-        // Don't show discount for bogo and freeShipping types
-        if (record.type === "bogo" || record.type === "freeShipping") {
-          return null;
-        }
-        
-        // Get the country for currency code lookup
-        let currencyDisplay = record.discount_unit;
-        
-        // For amountOff type, try to get the English currency code from the country
-        if (record.type === "amountOff") {
-          const country = countriesMap[record.country_id];
-          if (country?.currency_code?.en) {
-            currencyDisplay = country.currency_code.en;
-          }
-        }
-        
-        return (
-          <Tag 
-            style={{ 
-              fontSize: "12px", 
-              fontWeight: "500",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "4px",
-              padding: "4px 8px",
-              height: "auto",
-              width: "fit-content",
-              color: mode === "light" ? "#722ed1" : "#faad14",
-              borderColor: mode === "light" ? "#722ed1" : "#faad14",
-              backgroundColor: "transparent"
-            }}
-          >
-            <span style={{ fontSize: "14px", fontWeight: "600" }}>{discount}</span>
-            {currencyDisplay && (
-              <span style={{ 
-                fontSize: "12px", 
-                opacity: 0.9,
-                textTransform: "uppercase",
-                fontWeight: "500"
-              }}>
-                {currencyDisplay}
-              </span>
-            )}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: "Status",
-      dataIndex: "is_active",
-      key: "is_active",
-      width: 150,
-      render: (isActive: boolean, record: any) => (
-        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-          <Tag color={isActive ? 'green' : 'red'}>
-            {isActive ? 'Active' : 'Inactive'}
-          </Tag>
-          {record.is_featured && (
-            <Tag color="gold" style={{ fontSize: "10px", padding: "2px 6px" }}>
-              Featured
-            </Tag>
-          )}
-          {record.is_trending && (
-            <Tag color="volcano" style={{ fontSize: "10px", padding: "2px 6px" }}>
-              Trending
-            </Tag>
-          )}
-        </div>
-      ),
-    },
-    {
-      title: "Clicks",
-      dataIndex: "click_count",
-      key: "click_count",
-      width: 100,
-      sorter: true,
-      render: (clicks: number) => (
-        <span style={{ 
-          fontSize: "12px", 
-          color: clicks > 0 ? "#52c41a" : "#999",
-          fontWeight: clicks > 0 ? "500" : "normal"
-        }}>
-          {clicks || 0}
-        </span>
-      ),
-    },
+  // Get other siblings (cats with same mother or father, excluding littermates and current cat)
+  const otherSiblings = allCatsData?.data?.filter((cat: any) => {
+    if (cat.id === catData?.id) return false;
+    if (cat.litter_id === catData?.litter_id) return false; // Exclude littermates
+    
+    return (catData?.mother_id && cat.mother_id === catData.mother_id) ||
+           (catData?.father_id && cat.father_id === catData.father_id);
+  }) || [];
 
-    {
-      title: "Expiry Date",
-      dataIndex: "expiry_date",
-      key: "expiry_date",
-      width: 120,
-      sorter: true,
-      render: (date: string) => {
-        const expiryDate = new Date(date);
-        const now = new Date();
-        const isExpired = expiryDate < now;
-        const isExpiringSoon = expiryDate < new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
-        
-        return (
-          <span style={{ 
-            fontSize: "12px", 
-            color: isExpired ? "#ff4d4f" : isExpiringSoon ? "#faad14" : "#52c41a",
-            fontWeight: isExpired || isExpiringSoon ? "500" : "normal"
-          }}>
-            {expiryDate.toLocaleDateString()}
-          </span>
-        );
-      },
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 150,
-      render: (_: any, record: any) => (
-        <Space>
-          <Button
-            type="primary"
-            icon={<EyeOutlined style={{ color: mode === "dark" ? "#000000" : "#ffffff" }} />}
-            size="small"
-            onClick={() => navigate(`/deals/show/${record.id}`)}
-            className="action-button"
-          />
-          <Button
-            icon={<EditOutlined />}
-            size="small"
-            onClick={() => navigate(`/deals/edit/${record.id}`)}
-            className="action-button"
-          />
-          <Popconfirm
-            title="Delete Deal"
-            description="Are you sure you want to delete this deal? This action cannot be undone."
-            onConfirm={() => handleDeleteDeal(record)}
-            okText="Yes"
-            cancelText="No"
-            placement="left"
-            styles={{ root: { maxWidth: 400 } }}
-          >
-            <Button
-              icon={<DeleteOutlined />}
-              size="small"
-              danger
-              className="action-button"
-            />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+  // Get children (cats where this cat is the mother or father)
+  const children = allCatsData?.data?.filter((cat: any) => 
+    cat.mother_id === catData?.id || cat.father_id === catData?.id
+  ) || [];
 
-  if (catLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!cat) {
-    return <div>Cat not found</div>;
-  }
+  // Group children by litter
+  const childrenByLitter = children.reduce((acc: any, child: any) => {
+    const litterId = child.litter_id;
+    if (!acc[litterId]) {
+      acc[litterId] = [];
+    }
+    acc[litterId].push(child);
+    return acc;
+  }, {});
 
   return (
     <Show
-      headerButtons={[
-        <Button
-          key="back"
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate("/cats")}
-        >
-          Back to List
-        </Button>,
-        <Button
-          key="edit"
-          type="primary"
-          icon={<EditOutlined />}
-          onClick={() => navigate(`/cats/edit/${id}`)}
-          style={{
-            color: mode === "dark" ? "#000000" : "#ffffff"
-          }}
-        >
-          Edit
-        </Button>,
-      ]}
+      isLoading={isLoading}
+      headerButtons={
+        <Space>
+          <EditButton />
+          <DeleteButton />
+        </Space>
+      }
     >
-      <div style={{ width: "100%" }}>
-        {/* Cat Header Card with Cover Image */}
-        <Card 
-          style={{ marginBottom: "16px", padding: 0, overflow: "hidden" }}
-          bodyStyle={{ padding: 0 }}
-        >
-          {/* Cover Image as Background */}
-          {cat.cover_picture_url && (
-            <div 
-              style={{
-                width: "100%",
-                height: "180px",
-                backgroundImage: `url(${cat.cover_picture_url})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                margin: 0,
-                padding: 0,
-                position: "relative",
-              }}
-            >
-              {/* Gradient Overlay */}
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: "100%",
-                  background: `linear-gradient(to bottom, transparent, ${mode === "dark" ? "rgba(0, 0, 0, 0.9)" : "rgba(255, 255, 255, 0.9)"})`,
-                }}
-              />
-            </div>
-          )}
-
-          {/* Cat Info */}
-          <div style={{ padding: "20px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "16px", }}>
-              {/* Profile Picture */}
-              {cat.profile_picture_url && (
-                <Avatar
-                  size={100}
-                  src={cat.profile_picture_url}
-                  style={{ flexShrink: 0 }}
-                />
-              )}
-              
-              {/* Title and Info */}
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px" }}>
-                  <div>
-                    <Title level={2} style={{ margin: "0 0 0px 0" }}>
-                  {cat.title}
+      <Card
+        style={{
+          backgroundColor: mode === "dark" ? "#1f1f1f" : "#ffffff",
+          border: `1px solid ${mode === "dark" ? "#434343" : "#d9d9d9"}`,
+        }}
+      >
+        <Row gutter={[24, 24]}>
+          {/* Cat Name and Birth Date */}
+          <Col span={24}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+              <div>
+                <Title level={2} style={{ 
+                  color: mode === "dark" ? "#ffffff" : "#000000",
+                  marginBottom: "8px"
+                }}>
+                  {catData?.name || "Unnamed Cat"}
                 </Title>
                 
-                {cat.slug && (
-                      <Text type="secondary" style={{ fontSize: "16px", display: "block", marginBottom: "4px" }}>
-                        @{cat.slug}
-                  </Text>
-                )}
-                  </div>
+                <Text style={{ 
+                  color: mode === "dark" ? "#d9d9d9" : "#666666",
+                  fontSize: "16px"
+                }}>
+                  Born: {catData?.birth_date ? 
+                    new Date(catData.birth_date).toLocaleDateString() : 
+                    "Unknown"
+                  }
+                </Text>
+                <br />
+                <Text style={{ 
+                  color: mode === "dark" ? "#d9d9d9" : "#666666",
+                  fontSize: "16px"
+                }}>
+                  Age: {calculateAge(catData?.birth_date, catData)}
+                </Text>
+              </div>
+              
+              <div>
+                <Tag 
+                  color={catData?.status === "alive" ? "green" : 
+                         catData?.status === "dead" ? "red" : "orange"}
+                  style={{ fontSize: "16px", padding: "8px 16px" }}
+                >
+                  {catData?.status === "missing" && catData?.missing_since ? 
+                    `Missing since ${new Date(catData.missing_since).toLocaleDateString('en-GB')}` :
+                    catData?.status === "dead" && catData?.death_date ?
+                    `Dead since ${new Date(catData.death_date).toLocaleDateString('en-GB')}` :
+                    catData?.status?.charAt(0).toUpperCase() + catData?.status?.slice(1) || "Unknown"
+                  }
+                </Tag>
+              </div>
+        </div>
+          </Col>
 
-                                  {/* Status Tags */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "6px", alignItems: "flex-end" }}>
-                    {/* Top row - Active/Inactive and Age tags */}
-                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
-                    <Tag 
-                      color={cat.is_active ? "green" : "default"}
-                      style={{ 
-                        fontSize: "14px",
-                        padding: "4px 8px",
-                        height: "auto",
-                        minWidth: "80px",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        display: "flex",
-                        textAlign: "center",
-                        backgroundColor: mode === "light" ? "#e8e8e8" : undefined,
-                        borderColor: mode === "light" ? "#bfbfbf" : undefined,
-                        color: mode === "light" ? "#434343" : undefined,
-                      }}
-                    >
-                      {cat.is_active ? "Active" : "Inactive"}
+          <Divider style={{ 
+            borderColor: mode === "dark" ? "#434343" : "#d9d9d9",
+            margin: "24px 0"
+          }} />
+
+          {/* Details */}
+          <Col span={24}>
+            <Title level={3} style={{ 
+              color: mode === "dark" ? "#ffffff" : "#000000",
+              marginBottom: "16px"
+            }}>
+              Details
+            </Title>
+            
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={6}>
+                <div>
+                  <Text strong style={{ color: mode === "dark" ? "#ffffff" : "#000000" }}>
+                    Eye Color:
+                  </Text>
+                  <br />
+                  <Text style={{ color: mode === "dark" ? "#d9d9d9" : "#666666" }}>
+                    {catData?.eye_color || "Unknown"}
+                  </Text>
+                </div>
+              </Col>
+              
+              <Col xs={24} sm={12} md={6}>
+                <div>
+                  <Text strong style={{ color: mode === "dark" ? "#ffffff" : "#000000" }}>
+                    Fur Color:
+                  </Text>
+                  <br />
+                  {catData?.fur_color && catData.fur_color.length > 0 ? (
+                    <Tag color="blue">
+                      {catData.fur_color.join(", ")}
                     </Tag>
-                    
-                    {cat.age !== undefined && (
-                      <Tag 
-                        color="blue"
-                        style={{ 
-                          fontSize: "14px",
-                          padding: "4px 8px",
-                          height: "auto",
-                          minWidth: "80px",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          display: "flex",
-                          textAlign: "center",
-                        }}
-                      >
-                        {cat.age} years old
-                      </Tag>
-                    )}
-                    </div>
+                  ) : (
+                    <Text style={{ color: mode === "dark" ? "#d9d9d9" : "#666666" }}>
+                      Unknown
+                    </Text>
+                  )}
+                </div>
+              </Col>
+              
+              <Col xs={24} sm={12} md={6}>
+                <div>
+                  <Text strong style={{ color: mode === "dark" ? "#ffffff" : "#000000" }}>
+                    Fur Pattern:
+                  </Text>
+                  <br />
+                  {catData?.fur_pattern ? (
+                    <Tag color="gold">
+                      {catData.fur_pattern}
+                    </Tag>
+                  ) : (
+                    <Text style={{ color: mode === "dark" ? "#d9d9d9" : "#666666" }}>
+                      Unknown
+                    </Text>
+                  )}
+                </div>
+              </Col>
+              
+              <Col xs={24} sm={12} md={6}>
+                <div>
+                  <Text strong style={{ color: mode === "dark" ? "#ffffff" : "#000000" }}>
+                    Fur Length:
+                  </Text>
+                  <br />
+                  <Text style={{ color: mode === "dark" ? "#d9d9d9" : "#666666" }}>
+                    {catData?.fur_length || "Unknown"}
+                  </Text>
+                </div>
+              </Col>
+            </Row>
+          </Col>
+
+          <Divider style={{ 
+            borderColor: mode === "dark" ? "#434343" : "#d9d9d9",
+            margin: "24px 0"
+          }} />
+
+          {/* Parents */}
+          <Col span={24}>
+            <Title level={3} style={{ 
+              color: mode === "dark" ? "#ffffff" : "#000000",
+              marginBottom: "16px"
+            }}>
+              Parents
+            </Title>
+            
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12}>
+                <div>
+                  <Text strong style={{ color: mode === "dark" ? "#ffffff" : "#000000" }}>
+                    Mother:
+                  </Text>
+                  <br />
+                  <div style={{ marginTop: "8px" }}>
+                    <CatCard 
+                      cat={mother} 
+                      calculateAge={calculateAge}
+                    />
                   </div>
                 </div>
-
-                {/* Categories */}
-                {catCategories.length > 0 && (
-                  <div style={{ marginBottom: "12px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                      {catCategories.map((item: any) => (
-                        <Tag
-                          key={item.category_id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "6px",
-                            padding: "4px 8px",
-                            fontSize: "14px",
-                            height: "auto",
-                            margin: "2px 0",
-                            color: mode === "light" ? "#722ed1" : "#faad14",
-                            borderColor: mode === "light" ? "#722ed1" : "#faad14",
-                            cursor: "pointer",
-                            transition: "all 0.2s ease"
-                          }}
-                          onClick={() => navigate(`/categories/show/${item.category_id}`)}
-                        >
-                          {item.categories?.image_url && (
-                            <Image
-                              src={item.categories.image_url}
-                              width={16}
-                              height={16}
-                              style={{ 
-                                marginBottom: "7px",
-                                filter: mode === "light" 
-                                  ? "brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(246deg) brightness(104%) contrast(97%)"
-                                  : "brightness(0) saturate(100%) invert(84%) sepia(31%) saturate(6382%) hue-rotate(359deg) brightness(103%) contrast(107%)"
-                              }}
-                              preview={false}
-                            />
-                          )}
-                          <span>{item.categories?.title}</span>
-                        </Tag>
-                      ))}
-                    </div>
+              </Col>
+              
+              <Col xs={24} sm={12}>
+                <div>
+                  <Text strong style={{ color: mode === "dark" ? "#ffffff" : "#000000" }}>
+                    Father:
+                  </Text>
+                  <br />
+                  <div style={{ marginTop: "8px" }}>
+                    <CatCard 
+                      cat={father} 
+                      calculateAge={calculateAge}
+                    />
                   </div>
-                )}
+                </div>
+              </Col>
+            </Row>
+          </Col>
 
+          {/* Littermates */}
+          {littermates.length > 0 && (
+            <>
+              <Divider style={{ 
+                borderColor: mode === "dark" ? "#434343" : "#d9d9d9",
+                margin: "24px 0"
+              }} />
+              
+              <Col span={24}>
+                <Title level={3} style={{ 
+                  color: mode === "dark" ? "#ffffff" : "#000000",
+                  marginBottom: "16px"
+                }}>
+                  Littermates ({littermates.length})
+                </Title>
+                
+                <Row gutter={[16, 16]}>
+                  {littermates.map((littermate: any) => (
+                    <Col xs={24} sm={12} md={8} lg={6} key={littermate.id}>
+                      <CatCard 
+                        cat={littermate} 
+                        calculateAge={calculateAge}
+                      />
+                    </Col>
+                  ))}
+                </Row>
+              </Col>
+            </>
+          )}
 
-              </div>
-            </div>
-          </div>
-        </Card>
+          {/* Other Siblings */}
+          {otherSiblings.length > 0 && (
+            <>
+              <Divider style={{ 
+                borderColor: mode === "dark" ? "#434343" : "#d9d9d9",
+                margin: "24px 0"
+              }} />
+              
+              <Col span={24}>
+                <Title level={3} style={{ 
+                  color: mode === "dark" ? "#ffffff" : "#000000",
+                  marginBottom: "16px"
+                }}>
+                  Other Siblings ({otherSiblings.length})
+                </Title>
+                
+                <Row gutter={[16, 16]}>
+                  {otherSiblings.map((sibling: any) => (
+                    <Col xs={24} sm={12} md={8} lg={6} key={sibling.id}>
+                      <CatCard 
+                        cat={sibling} 
+                        calculateAge={calculateAge}
+                      />
+                    </Col>
+                  ))}
+                </Row>
+              </Col>
+            </>
+          )}
 
-        {/* Description */}
-        {cat.description && (
-          <Card style={{ marginBottom: "16px" }}>
-            <Title level={4} style={{ margin: "0 0 12px 0" }}>
-              About
+          {/* Children */}
+          {children.length > 0 && (
+            <>
+              <Divider style={{ 
+                borderColor: mode === "dark" ? "#434343" : "#d9d9d9",
+                margin: "24px 0"
+              }} />
+              
+              <Col span={24}>
+                <Title level={3} style={{ 
+                  color: mode === "dark" ? "#ffffff" : "#000000",
+                  marginBottom: "16px"
+                }}>
+                  Children ({children.length})
+                </Title>
+                
+                {Object.entries(childrenByLitter).map(([litterId, litterChildren]: [string, any]) => {
+                  const litter = littersMap.get(parseInt(litterId));
+                  const litterName = litter?.name || `Litter ${litterId}`;
+                  
+                  return (
+                    <div key={litterId} style={{ marginBottom: "24px" }}>
+                      <Title level={4} style={{ 
+                        color: mode === "dark" ? "#ffffff" : "#000000",
+                        marginBottom: "12px"
+                      }}>
+                        {litterName} ({litterChildren.length} kittens)
+                      </Title>
+                      
+                      <Row gutter={[16, 16]}>
+                        {litterChildren.map((child: any) => (
+                          <Col xs={24} sm={12} md={8} lg={6} key={child.id}>
+                            <CatCard 
+                              cat={child} 
+                              calculateAge={calculateAge}
+                            />
+                          </Col>
+                        ))}
+                      </Row>
+                    </div>
+                  );
+                })}
+              </Col>
+            </>
+          )}
+
+          {/* Notes */}
+          {catData?.notes && (
+            <>
+              <Divider style={{ 
+                borderColor: mode === "dark" ? "#434343" : "#d9d9d9",
+                margin: "24px 0"
+              }} />
+              
+              <Col span={24}>
+                <Title level={3} style={{ 
+                  color: mode === "dark" ? "#ffffff" : "#000000",
+                  marginBottom: "16px"
+                }}>
+                  Notes
             </Title>
-            <Paragraph style={{ margin: 0, fontSize: "16px", lineHeight: "1.6" }}>
-              {cat.description}
-            </Paragraph>
-          </Card>
-        )}
-
-        {/* Cat's Details Section */}
-        <Card style={{ marginBottom: "16px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <Title level={4} style={{ margin: 0 }}>
-              Cat Details
-            </Title>
-          </div>
           
             <div style={{ 
-              textAlign: "center", 
-              padding: "40px 20px",
-              color: mode === "dark" ? "#999" : "#666"
-            }}>
-            This cat is ready for adoption! Contact us for more information.
+                  backgroundColor: mode === "dark" ? "#141414" : "#f5f5f5",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  border: `1px solid ${mode === "dark" ? "#434343" : "#d9d9d9"}`
+                }}>
+                  <Text style={{ color: mode === "dark" ? "#d9d9d9" : "#666666" }}>
+                    {catData.notes}
+                  </Text>
             </div>
+              </Col>
+            </>
+          )}
+        </Row>
         </Card>
-      </div>
     </Show>
   );
 }; 

@@ -1,0 +1,58 @@
+id,created_at,litter_id,mother_id,father_id,birth_date,death_date,missing_since,status,name,eye_color,fur_pattern,fur_length,gender,notes,fur_color
+91,2025-10-05 06:48:14.263132+00,,,,,2021-05-24 00:00:00,,dead,Shamshoone,green,mackerel_tabby,short,male,"first ever cat
+stole him from the street
+egyptian miao","[""grey""]"
+90,2025-10-05 06:44:30.437144+00,19,46,,2025-09-07 00:02:00,,,alive,Antonio Alberto Benini The second,green,mackerel_tabby,short,male,,"[""orange""]"
+89,2025-10-05 06:43:14.658909+00,19,46,,2025-09-07 00:01:00,,,alive,Riccardo Alberto Benini The second,green,mackerel_tabby,short,male,,"[""orange""]"
+88,2025-10-05 06:39:11.271443+00,18,46,,2025-05-31 08:38:00,,,alive,Baheera,green,mackerel_tabby,short,female,,"[""brown"",""white""]"
+87,2025-10-05 06:37:35.920803+00,18,46,,2025-05-31 08:40:00,2025-07-20 00:00:00,,dead,Benicio del toro Benini The Third,green,mackerel_tabby,short,male,,"[""cream""]"
+86,2025-10-05 06:35:31.90183+00,18,46,,2025-05-31 08:35:00,2025-07-17 00:00:00,,dead,Alfonso Alberto Benini The second,green,tuxedo,short,male,,"[""orange"",""white""]"
+85,2025-10-05 06:33:55.970509+00,18,46,,2025-05-31 08:30:00,2025-05-31 08:30:00,,dead,,,calico,medium,,,"[""white"",""black"",""orange""]"
+84,2025-10-05 06:31:22.583069+00,17,46,,2024-06-09 08:35:00,,,alive,Lorenzo Alberto Benini The Orange The Second,green,mackerel_tabby,short,male,,"[""orange""]"
+83,2025-10-05 06:29:34.918627+00,17,46,,2024-06-09 09:41:00,2024-08-17 00:00:00,,dead,,green,tortoiseshell,short,,,"[""black"",""orange""]"
+82,2025-10-05 06:28:05.970752+00,17,46,,2024-06-09 09:06:00,2024-08-04 00:00:00,,dead,,green,mackerel_tabby,short,,,"[""black""]"
+81,2025-10-05 06:26:45.917663+00,17,46,,2024-06-09 08:40:00,2024-07-25 00:00:00,,dead,,,van,short,,,"[""white"",""black""]"
+80,2025-10-05 06:20:15.059652+00,16,72,,2025-06-04 08:15:00,2025-06-05 08:15:00,,dead,,,,,,,
+79,2025-10-05 06:19:36.480023+00,16,72,,2025-06-04 08:10:00,2025-06-04 08:10:00,,dead,,,,,,,
+78,2025-10-05 06:18:40.465151+00,16,72,,2025-06-04 08:05:00,2025-06-04 08:05:00,,dead,,,,,,,
+77,2025-10-05 06:15:22.277149+00,15,50,,2024-09-13 08:15:00,2024-11-03 08:15:00,,dead,,,solid,short,male,,"[""blue""]"
+76,2025-10-05 06:13:02.18691+00,15,50,,2024-09-13 08:10:00,2024-10-28 08:10:00,,dead,,,tuxedo,short,,,"[""white"",""black""]"
+75,2025-10-05 06:11:34.117536+00,15,50,,2024-09-13 08:05:00,2024-10-21 08:05:00,,dead,,,solid,short,,,"[""blue""]"
+74,2025-10-05 06:08:26.839462+00,14,50,,2024-04-20 12:15:00,,,alive,Louis,green,solid,short,male,lost an eye to infection,"[""black""]"
+73,2025-10-05 06:07:10.176957+00,14,50,,2024-04-20 12:35:00,,,alive,Sahm,green,solid,short,male,white arrow on body,"[""black"",""white""]"
+72,2025-10-05 06:05:46.598244+00,14,50,,2024-04-20 12:25:00,,,alive,Amira,green,mackerel_tabby,short,female,,"[""olive""]"
+71,2025-10-05 06:04:08.884183+00,14,50,,2024-04-20 11:55:00,,,alive,Amir,green,mackerel_tabby,short,male,,"[""olive""]"
+70,2025-10-05 05:17:46.918743+00,13,38,,2025-07-06 05:26:00,,,alive,Shaheer,green,mackerel_tabby,short,male,,"[""blue""]"
+69,2025-10-05 05:16:40.840207+00,13,38,,2025-07-06 05:00:00,,,alive,Shaheera,green,mackerel_tabby,short,female,,"[""blue""]"
+68,2025-10-05 05:13:25.100885+00,13,38,,2025-07-06 05:13:00,,,alive,Zaheera,green,harlequin,short,female,,"[""white"",""blue""]"
+67,2025-10-05 05:11:09.174563+00,13,38,,2025-07-06 05:20:00,2025-07-06 05:20:00,,dead,,,,medium,,,
+66,2025-10-05 05:06:39.759179+00,12,38,,2025-03-12 00:00:00,2025-04-15 00:00:00,,dead,,,,short,,,
+65,2025-10-05 05:03:56.869737+00,12,38,,2025-03-12 00:00:00,2025-04-12 00:00:00,,dead,,,,medium,,,
+64,2025-10-05 05:02:28.681611+00,12,38,,2025-03-12 00:00:00,2025-04-11 00:00:00,,dead,,,calico,medium,,,"[""white"",""orange"",""blue""]"
+63,2025-10-05 05:00:27.696863+00,12,38,,2025-03-12 00:00:00,2025-03-14 00:00:00,,dead,,,calico,short,,,"[""black"",""white"",""orange""]"
+62,2025-10-05 04:53:55.685262+00,11,38,,2024-05-22 11:28:00,,,alive,Fahd,green,solid,short,male,cross-eyed,"[""black""]"
+61,2025-10-05 04:52:18.522161+00,11,38,,2024-05-22 11:25:00,,,alive,Tiefa junior,green,solid,short,male,,"[""blue""]"
+60,2025-10-05 04:50:17.487456+00,11,38,,2024-05-22 09:10:00,2024-05-22 09:15:00,,dead,,,calico,short,,,"[""white"",""black"",""orange""]"
+59,2025-10-05 04:48:48.819325+00,11,38,,2024-05-22 08:50:00,2024-05-23 14:40:00,,dead,,,calico,short,,,"[""white"",""black"",""orange""]"
+58,2025-10-05 04:38:40.168813+00,10,38,37,2023-07-10 07:05:00,2023-07-19 00:00:00,,dead,,,tuxedo,medium,,,"[""white"",""black""]"
+57,2025-10-05 04:37:10.207489+00,10,38,37,2023-07-10 08:05:00,2023-07-28 00:00:00,,dead,,,van,medium,,,"[""white"",""black""]"
+56,2025-10-05 04:34:49.087082+00,10,38,37,2023-07-10 07:55:00,2023-07-13 00:00:00,,dead,,,harlequin,short,,,"[""white"",""blue""]"
+52,2025-10-05 04:06:16.493863+00,9,38,37,2023-01-28 14:26:00,2023-01-28 14:27:00,,dead,,,tuxedo,medium,,,"[""white"",""blue""]"
+51,2025-10-05 04:03:16.828248+00,9,38,37,2023-01-28 14:12:00,,,alive,The White One,green,solid,short,female,adopted by mom's friend,"[""white""]"
+50,2025-10-05 04:00:47.726773+00,9,38,37,2023-01-28 14:04:00,,2025-02-04 10:00:00,missing,The Black One,green,solid,short,female,,"[""black""]"
+49,2025-10-05 03:42:24.744805+00,8,39,37,2022-10-02 10:10:00,2022-10-02 18:00:00,,dead,,,solid,medium,,,"[""white""]"
+48,2025-10-05 03:39:59.491411+00,8,39,37,2022-10-02 10:05:00,2022-11-12 10:00:00,,dead,,,tuxedo,medium,,,"[""white"",""black""]"
+47,2025-10-05 03:37:17.774976+00,8,39,37,2022-10-02 10:00:00,2022-11-11 10:00:00,,dead,,,solid,medium,,color: black with a white patch between the legs,"[""black"",""white""]"
+46,2025-10-05 03:26:45.547184+00,7,35,,2023-06-18 14:18:00,,,alive,Sameera,green,mackerel_tabby,short,female,,"[""brown"",""black""]"
+45,2025-10-05 03:24:48.248992+00,7,35,,2023-06-18 14:00:00,,,alive,Moneera,green,tortoiseshell,short,female,,"[""orange"",""brown""]"
+44,2025-10-05 03:19:46.931874+00,7,35,,2023-06-18 13:22:00,2023-06-20 09:00:00,,dead,,,classic_tabby,medium,,,"[""white"",""brown""]"
+43,2025-10-05 03:13:28.870804+00,6,35,,2023-01-31 02:30:00,,2024-12-04 22:00:00,missing,,green,calico,short,female,,"[""white"",""brown"",""orange""]"
+42,2025-10-05 03:10:31.869803+00,6,35,,2023-01-31 02:12:00,2024-07-06 09:00:00,,dead,Rashdan,green,mackerel_tabby,short,male,mom killed him(voice recording: reminder mama killed a cat),"[""white"",""brown""]"
+41,2025-10-05 03:00:44.101481+00,5,35,,2022-07-31 10:00:00,2022-11-10 10:00:00,,dead,Retaag,green,calico,short,female,,"[""white"",""blue"",""fawn""]"
+40,2025-10-05 02:57:40.438867+00,5,35,,2022-07-31 10:01:00,,,alive,Rasheed,green,tuxedo,short,male,,"[""white"",""blue""]"
+39,2025-10-05 02:51:11.658952+00,4,35,,2021-12-31 10:00:00,2022-11-07 10:00:00,,dead,Reital,green,tuxedo,medium,female,,"[""white"",""blue""]"
+38,2025-10-05 02:49:13.226441+00,4,35,,2021-12-31 10:02:00,,,alive,Reimas,green,tuxedo,short,female,,"[""white"",""blue""]"
+37,2025-10-05 02:43:38.997017+00,4,35,,2021-12-31 10:01:00,,,alive,Rashaad,green,tuxedo,medium,male,,"[""black"",""white""]"
+35,2025-10-05 02:24:19.315024+00,,,,,,,missing,Tiefa,green,solid,short,female,"Stray we adopted.
+Russian blue
+color: bluish-gray with a white patch between the legs.","[""blue""]"

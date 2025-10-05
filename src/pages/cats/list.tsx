@@ -464,7 +464,6 @@ export const CatList = () => {
     {
       title: "Actions",
       key: "actions",
-      fixed: 'right',
       width: 120,
             render: (_: any, record: any) => (
         <Space>
