@@ -6,6 +6,7 @@ import { ColorModeContext } from "../../contexts/color-mode";
 import { useList } from "@refinedev/core";
 // import { supabaseClient as supabase } from "../../utility/supabaseClient";
 import { getEnumValues } from "../../utility/network/data";
+import dayjs from "dayjs";
 
 export const CatCreate = () => {
   const { mode } = useContext(ColorModeContext);
@@ -170,24 +171,19 @@ export const CatCreate = () => {
   // };
 
   const handleSave = async (values: any) => {
-    // Convert birth_date to local timezone if it exists
+    // Convert birth_date to exact local time
     if (values.birth_date) {
-      // Convert the moment/dayjs object to a Date and then to ISO string
-      // This will preserve the local timezone
-      const date = values.birth_date.toDate();
-      values.birth_date = date.toISOString();
+      values.birth_date = values.birth_date.format('YYYY-MM-DD HH:mm:ss');
     }
 
-    // Convert death_date to local timezone if it exists
+    // Convert death_date to exact local time
     if (values.death_date) {
-      const date = values.death_date.toDate();
-      values.death_date = date.toISOString();
+      values.death_date = values.death_date.format('YYYY-MM-DD HH:mm:ss');
     }
 
-    // Convert missing_since to local timezone if it exists
+    // Convert missing_since to exact local time
     if (values.missing_since) {
-      const date = values.missing_since.toDate();
-      values.missing_since = date.toISOString();
+      values.missing_since = values.missing_since.format('YYYY-MM-DD HH:mm:ss');
     }
 
     // File upload handling - commented out
@@ -336,6 +332,17 @@ export const CatCreate = () => {
           <Form.Item
             label="Birth Date"
             name="birth_date"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  if (dayjs.isDayjs(value) && value.isValid()) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Please select a valid date'));
+                }
+              }
+            ]}
           >
             <DatePicker
               showTime
@@ -641,6 +648,17 @@ export const CatCreate = () => {
             <Form.Item
               label="Death Date"
               name="death_date"
+              rules={[
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    if (dayjs.isDayjs(value) && value.isValid()) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('Please select a valid date'));
+                  }
+                }
+              ]}
             >
               <DatePicker
                 showTime
@@ -655,6 +673,17 @@ export const CatCreate = () => {
             <Form.Item
               label="Missing Since"
               name="missing_since"
+              rules={[
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    if (dayjs.isDayjs(value) && value.isValid()) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('Please select a valid date'));
+                  }
+                }
+              ]}
             >
               <DatePicker
                 showTime

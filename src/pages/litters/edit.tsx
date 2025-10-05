@@ -54,10 +54,9 @@ export const LitterEdit = () => {
   }, [query?.data?.data, formProps.form]);
 
   const handleSave = async (values: any) => {
-    // Convert birth_date to local timezone if it exists
+    // Convert birth_date to exact local time
     if (values.birth_date) {
-      const date = values.birth_date.toDate();
-      values.birth_date = date.toISOString();
+      values.birth_date = values.birth_date.format('YYYY-MM-DD HH:mm:ss');
     }
 
     if (formProps.onFinish) {

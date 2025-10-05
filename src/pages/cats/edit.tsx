@@ -46,6 +46,14 @@ export const CatEdit = () => {
     },
   });
 
+  // Fetch all litters for litter selection
+  const { data: allLittersData, isLoading: littersLoading } = useList({
+    resource: "litters",
+    pagination: {
+      mode: "off", // Get all litters without pagination
+    },
+  });
+
   const { open } = useNotificationProvider();
 
   // Fetch all enum values
@@ -185,24 +193,19 @@ export const CatEdit = () => {
   // };
 
   const handleSave = async (values: any) => {
-    // Convert birth_date to local timezone if it exists
+    // Convert birth_date to exact local time
     if (values.birth_date) {
-      // Convert the moment/dayjs object to a Date and then to ISO string
-      // This will preserve the local timezone
-      const date = values.birth_date.toDate();
-      values.birth_date = date.toISOString();
+      values.birth_date = values.birth_date.format('YYYY-MM-DD HH:mm:ss');
     }
 
-    // Convert death_date to local timezone if it exists
+    // Convert death_date to exact local time
     if (values.death_date) {
-      const date = values.death_date.toDate();
-      values.death_date = date.toISOString();
+      values.death_date = values.death_date.format('YYYY-MM-DD HH:mm:ss');
     }
 
-    // Convert missing_since to local timezone if it exists
+    // Convert missing_since to exact local time
     if (values.missing_since) {
-      const date = values.missing_since.toDate();
-      values.missing_since = date.toISOString();
+      values.missing_since = values.missing_since.format('YYYY-MM-DD HH:mm:ss');
     }
 
     if (formProps.onFinish) {
@@ -453,6 +456,29 @@ export const CatEdit = () => {
                   </Select.Option>
                 ))}
             </Select>
+            </Form.Item>
+
+            <Form.Item
+                label="Litter"
+                name="litter_id"
+            >
+              <Select
+                  placeholder="Unknown"
+                  loading={littersLoading}
+                  showSearch
+                  optionFilterProp="children"
+                  disabled={true}
+                  filterOption={(input, option) => {
+                    const label = option?.label || option?.children;
+                    return String(label).toLowerCase().includes(input.toLowerCase());
+                  }}
+                >
+                  {allLittersData?.data?.map((litter: any) => (
+                    <Select.Option key={litter.id} value={litter.id}>
+                      {litter.name || `Litter #${litter.id}`}
+                    </Select.Option>
+                  ))}
+                </Select>
             </Form.Item>
         </div>
 

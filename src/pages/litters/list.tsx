@@ -16,6 +16,14 @@ export const LitterList = () => {
     pagination: {
       mode: "off", // Get all litters without pagination
     },
+    sorters: {
+      initial: [
+        {
+          field: "created_at",
+          order: "desc",
+        },
+      ],
+    },
   });
 
   // Fetch all cats for parent name lookup
